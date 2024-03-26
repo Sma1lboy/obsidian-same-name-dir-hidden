@@ -1,0 +1,11 @@
+{
+	"id": "c-same-name-dir-hidden",
+	"name": "Same Name Dir Hide",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "The SameNameDirHide is an Obsidian plugin designed to enhance workspace organization by automatically hiding folders that have the same name as the current file being edited.",
+	"author": "Jackson Chen",
+	"authorUrl": "https://jacksonchen.me",
+	"fundingUrl": "https://jacksonchen.me",
+	"isDesktopOnly": false
+}
