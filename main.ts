@@ -67,8 +67,6 @@ export default class MainPlugin extends Plugin {
 					this.updateExplorer();
 				}, 1000)
 			);
-
-			console.log("loaded");
 		});
 	}
 
@@ -93,8 +91,6 @@ export default class MainPlugin extends Plugin {
 	}
 
 	updateExplorer() {
-		console.log("update");
-
 		const fileExplorerContainer = this.getFileExplorerContainer();
 
 		if (!fileExplorerContainer) {
