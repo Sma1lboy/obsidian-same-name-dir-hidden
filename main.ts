@@ -30,33 +30,106 @@ export default class MainPlugin extends Plugin {
 		this.statusBarItemEl = this.addStatusBarItem();
 		this.update();
 
-		//command trigger shown/off folder
 		this.addCommand({
-			id: "trigger-on-off-hidden-folder",
-			name: "Trigger Hidden folder",
+			id: "toggle-hidden-folder",
+			name: "Toggle Hidden Folder",
 			callback: () => {
-				console.log("trigger");
 				this.settings.turnHiddenFileOn =
 					!this.settings.turnHiddenFileOn;
-
 				this.update();
 			},
 		});
-		this.addRibbonIcon("dice", "Print leaf types", () => {
-			this.app.workspace.iterateAllLeaves((leaf) => {
-				console.log(leaf.getViewState().type);
-			});
-		});
+
+		this.fileExplorer = this.getFileExplorer();
+		const fileExplorerContainer = this.getFileExplorerContainer();
+
+		const items = this.getFilteredItems(fileExplorerContainer, "tree-item");
+
 		this.app.workspace.onLayoutReady(() => {
-			this.patchExplorerFolder();
-			// this.fileExplorer!.requestSort();
+			this.updateExplorer(items, fileExplorerContainer);
+		});
+
+		this.registerEvent(
+			this.app.vault.on("create", () => {
+				this.updateExplorer(items, fileExplorerContainer);
+			})
+		);
+		this.registerEvent(
+			this.app.vault.on("modify", () => {
+				this.updateExplorer(items, fileExplorerContainer);
+			})
+		);
+		this.registerEvent(
+			this.app.vault.on("delete", () => {
+				this.updateExplorer(items, fileExplorerContainer);
+			})
+		);
+		this.registerEvent(
+			this.app.vault.on("rename", () => {
+				this.updateExplorer(items, fileExplorerContainer);
+			})
+		);
+		this.registerEvent(
+			this.app.vault.on("rename", () => {
+				this.updateExplorer(items, fileExplorerContainer);
+			})
+		);
+	}
+
+	getFileExplorerContainer() {
+		const fileExplorerDiv = this.fileExplorer.containerEl;
+		return fileExplorerDiv.children[1].children[1].children[0].children[1];
+	}
+
+	getFilteredItems(container, filterClass) {
+		return Array.from(container.children).filter((c) =>
+			c.classList.contains(filterClass)
+		);
+	}
+
+	getItemsByClass(items, className) {
+		return items
+			.filter((item) => item.classList.contains(className))
+			.map((item) => ({
+				path: item.children[0].getAttribute("data-path") + ".md",
+				element: item,
+			}));
+	}
+
+	updateExplorer(items, fileExplorerContainer) {
+		let folder = [];
+		items.forEach((item) => {
+			if (item.classList[1] === "nav-folder") {
+				console.log(item.children[0].getAttribute("data-path"));
+				folder.push([
+					item.children[0].getAttribute("data-path") + ".md",
+					item,
+				]);
+			}
+		});
+
+		let files = items.filter((item) => item.classList[1] === "nav-file");
+
+		files.forEach((item) => {
+			let fileName = item.children[0].getAttribute("data-path");
+			let find = folder.find((i) => i[0] === fileName);
+			if (find) {
+				items.remove(find[1]);
+			}
+		});
+		while (fileExplorerContainer.firstChild) {
+			fileExplorerContainer.removeChild(fileExplorerContainer.firstChild);
+		}
+
+		console.log(fileExplorerContainer.childNodes);
+		items.forEach((item) => {
+			fileExplorerContainer.appendChild(item.cloneNode(true));
+			console.log("done appends");
 		});
 	}
 
 	getFileExplorer(): WorkspaceLeaf | undefined {
-		return this.app.workspace?.getLeafById(
-			"file-explorer"
-		) as WorkspaceLeaf;
+		return this.app.workspace.getLeavesOfType("file-explorer")[0];
 	}
 
 	patchExplorerFolder() {
