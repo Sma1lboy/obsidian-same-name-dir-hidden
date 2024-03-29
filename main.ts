@@ -69,16 +69,14 @@ export default class MainPlugin extends Plugin {
 				this.updateExplorer(items, fileExplorerContainer);
 			})
 		);
-		this.registerEvent(
-			this.app.vault.on("rename", () => {
-				this.updateExplorer(items, fileExplorerContainer);
-			})
-		);
+
+		console.log("loaded");
 	}
 
 	getFileExplorerContainer() {
-		const fileExplorerDiv = this.fileExplorer.containerEl;
-		return fileExplorerDiv.children[1].children[1].children[0].children[1];
+		console.log(this.fileExplorer);
+		return this.fileExplorer.containerEl.children[1].children[1].children[0]
+			.children[1];
 	}
 
 	getFilteredItems(container, filterClass) {
@@ -100,7 +98,6 @@ export default class MainPlugin extends Plugin {
 		let folder = [];
 		items.forEach((item) => {
 			if (item.classList[1] === "nav-folder") {
-				console.log(item.children[0].getAttribute("data-path"));
 				folder.push([
 					item.children[0].getAttribute("data-path") + ".md",
 					item,
@@ -121,10 +118,8 @@ export default class MainPlugin extends Plugin {
 			fileExplorerContainer.removeChild(fileExplorerContainer.firstChild);
 		}
 
-		console.log(fileExplorerContainer.childNodes);
 		items.forEach((item) => {
 			fileExplorerContainer.appendChild(item.cloneNode(true));
-			console.log("done appends");
 		});
 	}
 
