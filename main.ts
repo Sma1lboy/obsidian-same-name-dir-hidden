@@ -40,43 +40,41 @@ export default class MainPlugin extends Plugin {
 			},
 		});
 
-		this.fileExplorer = this.getFileExplorer();
-		const fileExplorerContainer = this.getFileExplorerContainer();
-
-		const items = this.getFilteredItems(fileExplorerContainer, "tree-item");
-
 		this.app.workspace.onLayoutReady(() => {
-			this.updateExplorer(items, fileExplorerContainer);
+			this.fileExplorer = this.getFileExplorer();
+			this.registerEvent(
+				this.app.vault.on("create", () => {
+					this.updateExplorer();
+				})
+			);
+			this.registerEvent(
+				this.app.vault.on("modify", () => {
+					this.updateExplorer();
+				})
+			);
+			this.registerEvent(
+				this.app.vault.on("delete", () => {
+					this.updateExplorer();
+				})
+			);
+			this.registerEvent(
+				this.app.vault.on("rename", () => {
+					this.updateExplorer();
+				})
+			);
+			this.registerInterval(
+				window.setInterval(() => {
+					this.updateExplorer();
+				}, 1000)
+			);
+
+			console.log("loaded");
 		});
-
-		this.registerEvent(
-			this.app.vault.on("create", () => {
-				this.updateExplorer(items, fileExplorerContainer);
-			})
-		);
-		this.registerEvent(
-			this.app.vault.on("modify", () => {
-				this.updateExplorer(items, fileExplorerContainer);
-			})
-		);
-		this.registerEvent(
-			this.app.vault.on("delete", () => {
-				this.updateExplorer(items, fileExplorerContainer);
-			})
-		);
-		this.registerEvent(
-			this.app.vault.on("rename", () => {
-				this.updateExplorer(items, fileExplorerContainer);
-			})
-		);
-
-		console.log("loaded");
 	}
 
 	getFileExplorerContainer() {
-		console.log(this.fileExplorer);
-		return this.fileExplorer.containerEl.children[1].children[1].children[0]
-			.children[1];
+		return this.fileExplorer?.containerEl?.children[1].children[1]
+			.children[0]?.children[1];
 	}
 
 	getFilteredItems(container, filterClass) {
@@ -94,7 +92,16 @@ export default class MainPlugin extends Plugin {
 			}));
 	}
 
-	updateExplorer(items, fileExplorerContainer) {
+	updateExplorer() {
+		console.log("update");
+
+		const fileExplorerContainer = this.getFileExplorerContainer();
+
+		if (!fileExplorerContainer) {
+			return;
+		}
+		const items = this.getFilteredItems(fileExplorerContainer, "tree-item");
+
 		let folder = [];
 		items.forEach((item) => {
 			if (item.classList[1] === "nav-folder") {
