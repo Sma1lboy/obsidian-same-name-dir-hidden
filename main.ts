@@ -22,20 +22,20 @@ export default class MainPlugin extends Plugin {
 		this.statusBarItemEl.setText(
 			"Hidden turn " + (this.settings.turnHiddenFileOn ? "on" : "off")
 		);
+		if (this.settings.turnHiddenFileOn) {
+			this.updateExplorer();
+		}
 	}
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new SettingTab(this.app, this));
 
 		this.statusBarItemEl = this.addStatusBarItem();
-		this.update();
 
 		this.addCommand({
 			id: "toggle-hidden-folder",
 			name: "Toggle Hidden Folder",
 			callback: () => {
-				this.settings.turnHiddenFileOn =
-					!this.settings.turnHiddenFileOn;
 				this.update();
 			},
 		});
@@ -44,27 +44,27 @@ export default class MainPlugin extends Plugin {
 			this.fileExplorer = this.getFileExplorer();
 			this.registerEvent(
 				this.app.vault.on("create", () => {
-					this.updateExplorer();
+					this.update();
 				})
 			);
 			this.registerEvent(
 				this.app.vault.on("modify", () => {
-					this.updateExplorer();
+					this.update();
 				})
 			);
 			this.registerEvent(
 				this.app.vault.on("delete", () => {
-					this.updateExplorer();
+					this.update();
 				})
 			);
 			this.registerEvent(
 				this.app.vault.on("rename", () => {
-					this.updateExplorer();
+					this.update();
 				})
 			);
 			this.registerInterval(
 				window.setInterval(() => {
-					this.updateExplorer();
+					this.update();
 				}, 1000)
 			);
 		});
