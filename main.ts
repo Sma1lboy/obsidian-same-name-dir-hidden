@@ -18,14 +18,9 @@ export default class MainPlugin extends Plugin {
 	settings: MyPluginSettings;
 	statusBarItemEl: HTMLElement;
 	fileExplorer?: WorkspaceLeaf;
-	update() {
-		this.statusBarItemEl.setText(
-			"Hidden turn " + (this.settings.turnHiddenFileOn ? "on" : "off")
-		);
-		if (this.settings.turnHiddenFileOn) {
-			this.updateExplorer();
-		}
-	}
+	originFiles?: any;
+	firstTime = true;
+
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new SettingTab(this.app, this));
@@ -90,11 +85,36 @@ export default class MainPlugin extends Plugin {
 			}));
 	}
 
+	update() {
+		console.log("update")
+		this.statusBarItemEl.setText(
+			"Hidden turn " + (this.settings.turnHiddenFileOn ? "on" : "off")
+		);
+		if (this.settings.turnHiddenFileOn) {
+			this.updateExplorer();
+		} else if(!this.firstTime) {
+			this.firstTime = true;
+			const fileExplorerContainer = this.getFileExplorerContainer();
+			this.updateExplorerList(fileExplorerContainer, this.originFiles)
+		}
+	}
+	updateExplorerList(container, files) {
+		while (container.firstChild) {
+			container.removeChild(container.firstChild);
+		}
+		files.forEach((item) => {
+			container.appendChild(item.cloneNode(true));
+		});
+	}
 	updateExplorer() {
 		const fileExplorerContainer = this.getFileExplorerContainer();
 
 		if (!fileExplorerContainer) {
 			return;
+		} else if(this.firstTime) {
+			this.firstTime = false;
+			this.originFiles = this.getFilteredItems(fileExplorerContainer, "tree-item").map(item => item.cloneNode(true));
+			console.log(this.originFiles)
 		}
 		const items = this.getFilteredItems(fileExplorerContainer, "tree-item");
 
@@ -176,7 +196,7 @@ class SettingTab extends PluginSettingTab {
 						this.plugin.settings.turnHiddenFileOn = value;
 						await this.plugin.saveSettings();
 						this.plugin.update();
-					})
+					}) 
 			);
 	}
 }
