@@ -8,10 +8,12 @@ import {
 
 interface MyPluginSettings {
 	turnHiddenFileOn: boolean;
+	turnStatusTextBar: boolean;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
 	turnHiddenFileOn: true,
+	turnStatusTextBar: true,
 };
 
 export default class MainPlugin extends Plugin {
@@ -86,10 +88,9 @@ export default class MainPlugin extends Plugin {
 	}
 
 	update() {
+		//TODO Testing console, remember to remove it 
 		console.log("update")
-		this.statusBarItemEl.setText(
-			"Hidden turn " + (this.settings.turnHiddenFileOn ? "on" : "off")
-		);
+		this.statusBarItemEl.setText(this.settings.turnStatusTextBar ? ("Hidden turn " + (this.settings.turnHiddenFileOn ? "on" : "off")) : "");
 		if (this.settings.turnHiddenFileOn) {
 			this.updateExplorer();
 		} else if(!this.firstTime) {
@@ -194,6 +195,20 @@ class SettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.turnHiddenFileOn)
 					.onChange(async (value) => {
 						this.plugin.settings.turnHiddenFileOn = value;
+						await this.plugin.saveSettings();
+						this.plugin.update();
+					}) 
+			);
+			new Setting(containerEl)
+			.setName("Turn Status Text Bar On")
+			.setDesc(
+				"Turn on shown the plugin status on bottom right"
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.turnStatusTextBar)
+					.onChange(async (value) => {
+						this.plugin.settings.turnStatusTextBar = value;
 						await this.plugin.saveSettings();
 						this.plugin.update();
 					}) 
