@@ -120,17 +120,21 @@ export default class MainPlugin extends Plugin {
 		const items = this.getFilteredItems(fileExplorerContainer, "tree-item");
 
 		let folder = [];
+		let files = [];
+		//find all folders and files
 		items.forEach((item) => {
 			if (item.classList[1] === "nav-folder") {
 				folder.push([
 					item.children[0].getAttribute("data-path") + ".md",
 					item,
 				]);
+			} else if (item.classList[1] === 'nav-file') {
+				files.push(item);
 			}
 		});
 
-		let files = items.filter((item) => item.classList[1] === "nav-file");
 
+		//if file has same name as folder, remove it from items.
 		files.forEach((item) => {
 			let fileName = item.children[0].getAttribute("data-path");
 			let find = folder.find((i) => i[0] === fileName);
@@ -138,13 +142,7 @@ export default class MainPlugin extends Plugin {
 				items.remove(find[1]);
 			}
 		});
-		while (fileExplorerContainer.firstChild) {
-			fileExplorerContainer.removeChild(fileExplorerContainer.firstChild);
-		}
-
-		items.forEach((item) => {
-			fileExplorerContainer.appendChild(item.cloneNode(true));
-		});
+		this.updateExplorerList(fileExplorerContainer, items)
 	}
 
 	getFileExplorer(): WorkspaceLeaf | undefined {
