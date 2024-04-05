@@ -107,18 +107,7 @@ export default class MainPlugin extends Plugin {
 			container.appendChild(item.cloneNode(true));
 		});
 	}
-	updateExplorer() {
-		const fileExplorerContainer = this.getFileExplorerContainer();
-
-		if (!fileExplorerContainer) {
-			return;
-		} else if(this.firstTime) {
-			this.firstTime = false;
-			this.originFiles = this.getFilteredItems(fileExplorerContainer, "tree-item").map(item => item.cloneNode(true));
-			console.log(this.originFiles)
-		}
-		const items = this.getFilteredItems(fileExplorerContainer, "tree-item");
-
+	removeSameNameDir(items) {
 		let folder = [];
 		let files = [];
 		//find all folders and files
@@ -142,6 +131,20 @@ export default class MainPlugin extends Plugin {
 				items.remove(find[1]);
 			}
 		});
+	}
+	updateExplorer() {
+		const fileExplorerContainer = this.getFileExplorerContainer();
+
+		if (!fileExplorerContainer) {
+			return;
+		} else if(this.firstTime) {
+			this.firstTime = false;
+			this.originFiles = this.getFilteredItems(fileExplorerContainer, "tree-item").map(item => item.cloneNode(true));
+			console.log(this.originFiles)
+		}
+		const items = this.getFilteredItems(fileExplorerContainer, "tree-item");
+		this.removeSameNameDir(items)
+
 		this.updateExplorerList(fileExplorerContainer, items)
 	}
 
