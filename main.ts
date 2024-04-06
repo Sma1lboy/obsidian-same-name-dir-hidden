@@ -39,6 +39,7 @@ export default class MainPlugin extends Plugin {
 
 		this.app.workspace.onLayoutReady(() => {
 			this.fileExplorer = this.getFileExplorer();
+
 			this.registerEvent(
 				this.app.vault.on("create", () => {
 					this.update();
@@ -67,7 +68,10 @@ export default class MainPlugin extends Plugin {
 		});
 	}
 
-	getFileExplorerContainer() {
+	getFileExplorer(): WorkspaceLeaf | undefined {
+		return this.app.workspace.getLeavesOfType("file-explorer")[0];
+	}
+	getFileExplorerContainer() : object {
 		return this.fileExplorer?.containerEl?.children[1].children[1]
 			.children[0]?.children[1];
 	}
@@ -87,9 +91,11 @@ export default class MainPlugin extends Plugin {
 			}));
 	}
 
+	/**
+	 * Update the current status for current plugin.
+	 */
 	update() {
 		//TODO Testing console, remember to remove it 
-		console.log("update")
 		this.statusBarItemEl.setText(this.settings.turnStatusTextBar ? ("Hidden turn " + (this.settings.turnHiddenFileOn ? "on" : "off")) : "");
 		if (this.settings.turnHiddenFileOn) {
 			this.updateExplorer();
@@ -99,7 +105,7 @@ export default class MainPlugin extends Plugin {
 			this.updateExplorerList(fileExplorerContainer, this.originFiles)
 		}
 	}
-	updateExplorerList(container, files) {
+	updateExplorerList(container : any, files : any) {
 		while (container.firstChild) {
 			container.removeChild(container.firstChild);
 		}
@@ -107,50 +113,67 @@ export default class MainPlugin extends Plugin {
 			container.appendChild(item.cloneNode(true));
 		});
 	}
-	removeSameNameDir(items) {
-		let folder = [];
-		let files = [];
-		//find all folders and files
-		items.forEach((item) => {
+
+	/**
+	 * Found All folder and all files
+	 * @param currDir current folder
+	 * @param files 
+	 * @param folders 
+	 */
+	getAllFolderAndDir(currDir, files, folders, items) {
+		if(currDir.children[0].classList[0]==="tree-item-self") {
+			return;
+		}
+
+		
+		Array.from(currDir.children).forEach(item => {
 			if (item.classList[1] === "nav-folder") {
-				folder.push([
+				folders.push([
 					item.children[0].getAttribute("data-path") + ".md",
 					item,
 				]);
+				this.getAllFolderAndDir(item, files, folders, items)
 			} else if (item.classList[1] === 'nav-file') {
+				console.log(item)
+
 				files.push(item);
 			}
-		});
+			items.push(item)
+		})
+		
+	}
+	getAllElementRemoveSameNameDir(fileExplorerContainer : any) {
+		
+		const folders : any = [];
+		const files : any = [];
+		const items : any = [];
 
-
+		this.getAllFolderAndDir(fileExplorerContainer, files, folders, items)
+		console.log(items)
 		//if file has same name as folder, remove it from items.
 		files.forEach((item) => {
-			let fileName = item.children[0].getAttribute("data-path");
-			let find = folder.find((i) => i[0] === fileName);
+			const fileName = item.children[0].getAttribute("data-path");
+			const find = folders.find((i) => i[0] === fileName);
 			if (find) {
 				items.remove(find[1]);
 			}
 		});
+		return items;
 	}
 	updateExplorer() {
 		const fileExplorerContainer = this.getFileExplorerContainer();
-
 		if (!fileExplorerContainer) {
 			return;
-		} else if(this.firstTime) {
+		} 
+		if(this.firstTime) {
 			this.firstTime = false;
 			this.originFiles = this.getFilteredItems(fileExplorerContainer, "tree-item").map(item => item.cloneNode(true));
-			console.log(this.originFiles)
 		}
-		const items = this.getFilteredItems(fileExplorerContainer, "tree-item");
-		this.removeSameNameDir(items)
-
+		const items = this.getAllElementRemoveSameNameDir(fileExplorerContainer)
 		this.updateExplorerList(fileExplorerContainer, items)
 	}
 
-	getFileExplorer(): WorkspaceLeaf | undefined {
-		return this.app.workspace.getLeavesOfType("file-explorer")[0];
-	}
+
 
 	patchExplorerFolder() {
 		this.fileExplorer = this.getFileExplorer();
