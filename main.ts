@@ -72,12 +72,11 @@ export default class MainPlugin extends Plugin {
 		return this.app.workspace.getLeavesOfType("file-explorer")[0];
 	}
 	getFileExplorerContainer() : object {
-		return this.fileExplorer?.containerEl?.children[1].children[1]
-			.children[0]?.children[1];
+		return this.fileExplorer?.containerEl?.children[1].children[1].children[0]
 	}
 
-	getFilteredItems(container, filterClass) {
-		return Array.from(container.children).filter((c) =>
+	getDirFilteredItems(dir, filterClass) {
+		return Array.from(dir.children).filter((c) =>
 			c.classList.contains(filterClass)
 		);
 	}
@@ -124,8 +123,6 @@ export default class MainPlugin extends Plugin {
 		if(currDir.children[0].classList[0]==="tree-item-self") {
 			return;
 		}
-
-		
 		Array.from(currDir.children).forEach(item => {
 			if (item.classList[1] === "nav-folder") {
 				folders.push([
@@ -134,7 +131,6 @@ export default class MainPlugin extends Plugin {
 				]);
 				this.getAllFolderAndDir(item, files, folders, items)
 			} else if (item.classList[1] === 'nav-file') {
-				console.log(item)
 
 				files.push(item);
 			}
@@ -149,7 +145,6 @@ export default class MainPlugin extends Plugin {
 		const items : any = [];
 
 		this.getAllFolderAndDir(fileExplorerContainer, files, folders, items)
-		console.log(items)
 		//if file has same name as folder, remove it from items.
 		files.forEach((item) => {
 			const fileName = item.children[0].getAttribute("data-path");
@@ -167,11 +162,62 @@ export default class MainPlugin extends Plugin {
 		} 
 		if(this.firstTime) {
 			this.firstTime = false;
-			this.originFiles = this.getFilteredItems(fileExplorerContainer, "tree-item").map(item => item.cloneNode(true));
+			this.originFiles = this.getDirFilteredItems(fileExplorerContainer, "tree-item").map(item => item.cloneNode(true));
 		}
-		const items = this.getAllElementRemoveSameNameDir(fileExplorerContainer)
+		const items = this.updateExplorerListTest(fileExplorerContainer, true)
 		this.updateExplorerList(fileExplorerContainer, items)
 	}
+	updateExplorerListTest(dir, isRoot) {
+		if(dir.children.length == 1) {
+			return null;
+		}
+		
+		const folders : any = [];
+		const files : any = [];
+		const items : any = [];
+		let iterateChild = isRoot ? dir : dir.children[1]; 
+		Array.from(iterateChild.children).forEach(item => {
+			if (item.classList[1] === "nav-folder") {
+				let dataPath = item.children[0].getAttribute("data-path")
+				folders.push([
+					dataPath + ".md",
+					item,
+				]);
+				console.log(dataPath)
+			} else if (item.classList[1] === 'nav-file') {
+				files.push(item);
+			}
+			items.push(item)
+		})
+		folders.forEach((folder) => {
+			let subItems = this.updateExplorerListTest(folder[1], false)
+			
+			if(subItems) {
+				console.log("current folder:", folder, subItems)
+				this.updateSubDirList(folder[1], subItems)
+			}
+		})
+		//if file has same name as folder, remove it from items.
+		files.forEach((item) => {
+			const fileName = item.children[0].getAttribute("data-path");
+			const find = folders.find((i) => i[0] === fileName);
+			if (find) {
+				// console.log("remove this file",fileName, item, isRoot, find)
+				items.remove(find[1]);
+			}
+		});
+		return items;
+	}
+	updateSubDirList(subDir, list) {
+		subDir = subDir.children[1];
+		while (subDir.firstChild) {
+			subDir.removeChild(subDir.firstChild);
+		}
+		list.forEach((item) => {
+			subDir.appendChild(item.cloneNode(true));
+		});
+	}
+
 
 
 
