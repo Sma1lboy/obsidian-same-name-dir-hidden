@@ -74,21 +74,12 @@ export default class MainPlugin extends Plugin {
 	getFileExplorerContainer() : object {
 		return this.fileExplorer?.containerEl?.children[1].children[1].children[0]
 	}
-
 	getDirFilteredItems(dir, filterClass) {
 		return Array.from(dir.children).filter((c) =>
 			c.classList.contains(filterClass)
 		);
 	}
 
-	getItemsByClass(items, className) {
-		return items
-			.filter((item) => item.classList.contains(className))
-			.map((item) => ({
-				path: item.children[0].getAttribute("data-path") + ".md",
-				element: item,
-			}));
-	}
 
 	/**
 	 * Update the current status for current plugin.
@@ -112,49 +103,6 @@ export default class MainPlugin extends Plugin {
 			container.appendChild(item.cloneNode(true));
 		});
 	}
-
-	/**
-	 * Found All folder and all files
-	 * @param currDir current folder
-	 * @param files 
-	 * @param folders 
-	 */
-	getAllFolderAndDir(currDir, files, folders, items) {
-		if(currDir.children[0].classList[0]==="tree-item-self") {
-			return;
-		}
-		Array.from(currDir.children).forEach(item => {
-			if (item.classList[1] === "nav-folder") {
-				folders.push([
-					item.children[0].getAttribute("data-path") + ".md",
-					item,
-				]);
-				this.getAllFolderAndDir(item, files, folders, items)
-			} else if (item.classList[1] === 'nav-file') {
-
-				files.push(item);
-			}
-			items.push(item)
-		})
-		
-	}
-	getAllElementRemoveSameNameDir(fileExplorerContainer : any) {
-		
-		const folders : any = [];
-		const files : any = [];
-		const items : any = [];
-
-		this.getAllFolderAndDir(fileExplorerContainer, files, folders, items)
-		//if file has same name as folder, remove it from items.
-		files.forEach((item) => {
-			const fileName = item.children[0].getAttribute("data-path");
-			const find = folders.find((i) => i[0] === fileName);
-			if (find) {
-				items.remove(find[1]);
-			}
-		});
-		return items;
-	}
 	updateExplorer() {
 		const fileExplorerContainer = this.getFileExplorerContainer();
 		if (!fileExplorerContainer) {
@@ -164,10 +112,17 @@ export default class MainPlugin extends Plugin {
 			this.firstTime = false;
 			this.originFiles = this.getDirFilteredItems(fileExplorerContainer, "tree-item").map(item => item.cloneNode(true));
 		}
-		const items = this.updateExplorerListTest(fileExplorerContainer, true)
+		const items = this.removeSameNameDir(fileExplorerContainer, true)
 		this.updateExplorerList(fileExplorerContainer, items)
 	}
-	updateExplorerListTest(dir, isRoot) {
+
+	/**
+	 * 
+	 * @param dir current directory
+	 * @param isRoot is current dir is Root of current explorer? A little diff in HTML view
+	 * @returns file explorer object without any same name dir.
+	 */
+	removeSameNameDir(dir, isRoot) {
 		if(dir.children.length == 1) {
 			return null;
 		}
@@ -190,7 +145,7 @@ export default class MainPlugin extends Plugin {
 			items.push(item)
 		})
 		folders.forEach((folder) => {
-			let subItems = this.updateExplorerListTest(folder[1], false)
+			let subItems = this.removeSameNameDir(folder[1], false)
 			
 			if(subItems) {
 				console.log("current folder:", folder, subItems)
@@ -216,13 +171,6 @@ export default class MainPlugin extends Plugin {
 		list.forEach((item) => {
 			subDir.appendChild(item.cloneNode(true));
 		});
-	}
-
-
-
-
-	patchExplorerFolder() {
-		this.fileExplorer = this.getFileExplorer();
 	}
 
 	onunload() {
